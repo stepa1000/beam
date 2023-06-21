@@ -121,7 +121,11 @@ streamingRunQueryError (conn@Pg.Connection {connectionHandle}) x = do
               else Pg.sendQuery conn' syntax
 
         if success
-          then return ""
+          then do
+            C.bracketP
+              (pure ())
+              (\_ -> gracefulShutdown conn')
+              (\_ -> return "")
           else do
             errMsg <- fromMaybe "No libpq error provided" <$> liftIO (Pg.errorMessage conn')
             return (show errMsg)
